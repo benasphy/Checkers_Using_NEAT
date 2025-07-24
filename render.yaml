@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: checkers-app
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python web_visualize.py
+    autoDeploy: true
