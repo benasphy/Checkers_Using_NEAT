@@ -4,6 +4,12 @@ This project is a robust, feature-rich Checkers AI agent that learns to play Che
 
 ---
 
+## Play Online
+
+Try the web app instantly: [https://checkers-using-neat1.onrender.com/](https://checkers-using-neat1.onrender.com/)
+
+---
+
 ## Features
 - Modular Checkers game engine (supports all rules, legal moves, win/draw detection)
 - NEAT integration (using `neat-python`)
