@@ -78,6 +78,9 @@ HTML_TEMPLATE = '''
 </head>
 <body>
   <h2>Checkers: Human vs NEAT</h2>
+  <div style="font-size: 1.1em; margin-bottom: 10px; color: #444;">
+    Developed by Biniam (🅑ÊÑ🅙Á🅜ÏÑ) &mdash; <a href="https://github.com/benasphy/Checkers_Using_NEAT" target="_blank">GitHub</a>
+  </div>
   <form method="post" style="margin-bottom: 10px;">
     <label>Agent Mode: </label>
     <select name="agent_mode" onchange="this.form.submit()">
