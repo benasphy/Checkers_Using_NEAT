@@ -110,7 +110,7 @@ Then open http://localhost:5000 in your browser.
 ---
 
 ## Example Screenshot
-![Web App Screenshot](<your-screenshot-url-here>)
+![Web App Screenshot](image.png)
 
 ---
 
