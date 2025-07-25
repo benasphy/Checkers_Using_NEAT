@@ -99,6 +99,9 @@ Then open http://localhost:5000 in your browser.
 - **Visualize Random vs Random:** `python main.py viz_random_vs_random`
 - **Analysis & Plots:** Training metrics and performance logs are saved for later analysis (see `ai/game_analysis.py`)
 
+### Example Training Plot
+![Training Plot](./train_image.jpg)
+
 ---
 
 ## Extending
