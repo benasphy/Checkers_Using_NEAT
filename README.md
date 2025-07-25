@@ -1,4 +1,4 @@
-# Checkers AI with NEAT
+# Checkers AI Using NEAT
 
 This project is a robust, feature-rich Checkers AI agent that learns to play Checkers using NEAT (NeuroEvolution of Augmenting Topologies). Inspired by AlphaGo, the agent evolves its neural network topology and weights through self-play and learns from its mistakes.
 
