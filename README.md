@@ -100,7 +100,7 @@ Then open http://localhost:5000 in your browser.
 - **Analysis & Plots:** Training metrics and performance logs are saved for later analysis (see `ai/game_analysis.py`)
 
 ### Example Training Plot
-![Training Plot](./train_image.jpg)
+![Training Plot](./train_img.jpg)
 
 ---
 
