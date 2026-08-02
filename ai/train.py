@@ -179,7 +179,7 @@ def run_neat_dual(config_file, generations=50, enable_analysis=True):
             print(f"Saved checkpoint: {checkpoint_name}")
         
         # Experience Replay and Imitation Learning
-        # (Disabled: user does not want to use it)
+        # (Disabled: I do not want to use it, for now)
         # if generation % 5 == 0:
         #     exp_buffer = ExperienceReplayBuffer()
         #     human_loader = HumanGameLoader()
