@@ -1,0 +1,15 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# OS
+.DS_Store
+
+# Training outputs (checkpoints, logs, calibration)
+runs/
+
+# Local artifacts
+*.egg-info/
+.venv/
+venv/

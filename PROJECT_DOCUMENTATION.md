@@ -1,197 +1,115 @@
-# Checkers AI Using NEAT - Documentation
+# Checkers AI - Design Documentation
+
+This document explains the architecture and the reasoning behind it. For
+commands and quickstart, see `README.md`.
 
 ---
 
-## 1. Project Overview
+## 1. Overview
 
-Checkers AI Using NEAT is a feature-rich project that leverages NeuroEvolution of Augmenting Topologies (NEAT) to train an AI agent to play Checkers. Inspired by AlphaGo, this project demonstrates how neural networks can evolve through self-play, reinforcement, and neuroevolution to master a classic board game.
+The agent follows the Blondie24 recipe, modernized: evolution (NEAT) learns a
+**value function** with no human strategic knowledge, and **alpha-beta search**
+turns that evaluation into strong tactical play. The project is structured for
+research use: a rule-exact engine validated by perft, seeded reproducible
+training, and strength measurement that is strictly separated from fitness.
 
----
-
-## 2. Features
-- Modular Checkers game engine (all rules, legal moves, win/draw detection)
-- NEAT integration (using `neat-python`)
-- Multiple agent types: NEAT, MCTS+NEAT, Random, Value-based
-- Agent vs Agent and Agent vs Human play modes
-- Training loop with logging, checkpointing, and performance analysis
-- Visualization: text-based, pygame, and web (Flask)
-- Web deployment via Render
-- Configurable NEAT parameters
-- Easy extensibility for new features
-
----
-
-## 3. How It Works
-
-### 3.1 NEAT (NeuroEvolution of Augmenting Topologies)
-- Evolves both the weights and structure of neural networks
-- Used to create agents that learn to play Checkers through self-play
-
-### 3.2 MCTS (Monte Carlo Tree Search)
-- MCTS+NEAT agent uses NEAT networks to guide search and evaluation
-- Allows for more strategic play by simulating many possible futures
-
-### 3.3 Game Engine
-- Written in Python, supports all Checkers rules
-- Board representation, move generation, win/draw detection
-
----
-
-## 4. Installation & Setup
-
-### Requirements
-- Python 3.8+
-- neat-python
-- pygame
-- numpy
-- Flask
-
-### Install dependencies
-```bash
-pip install -r requirements.txt
+```
+game outcome fitness            measurement only
+   (peers + HOF)                (never trains)
+        |                             |
+   NEAT population  --best-->  fixed ladder (random, material-d1/2/4)
+        |                             |
+  value network V(s)            performance Elo
+        |
+  alpha-beta search (depth d)  ->  moves
 ```
 
 ---
 
-## 5. Usage
+## 2. Engine (`checkers/bitboard.py`)
 
-### 5.1 CLI Usage
-- **Train the AI:**
-  ```bash
-  python main.py train
-  ```
-- **Play against the AI (CLI):**
-  ```bash
-  python main.py play
-  ```
-- **Visualize games (local, requires pygame):**
-  ```bash
-  python main.py visualize
-  ```
-- **Visualize NEAT vs Random:**
-  ```bash
-  python main.py viz_neat_vs_random
-  ```
-- **Visualize Random vs Random:**
-  ```bash
-  python main.py viz_random_vs_random
-  ```
+- 32 playable squares in four 32-bit masks (`m1, k1, m2, k2`), side to move,
+  half-move clock, incremental Zobrist hash.
+- American rules exactly: mandatory captures; multi-jump sequences generated
+  as complete single moves (piece-locked continuation is therefore implicit);
+  a man crowned mid-jump stops immediately; captured pieces stay on the board
+  until the move completes (they block landing squares and cannot be jumped
+  twice); men capture forward only; a side with no legal move loses.
+- Validation: `perft(1..8)` equals the published sequence
+  7, 49, 302, 1469, 7361, 36768, 179740, 845931, plus differential testing
+  against an independent array-based reference implementation over random
+  playouts, with incremental-hash verification.
 
-### 5.2 Web App (Flask)
-- Run locally:
-  ```bash
-  python web_visualize.py
-  ```
-  Then open http://localhost:5000 in your browser.
+`checkers/game.py` adds threefold repetition and the 40-move rule (80 plies
+without capture or man move) and exposes the legacy tuple API used by the web
+UI.
 
-### 5.3 Deploy to Render
-- Push your code to GitHub
-- Create a new Web Service on [Render](https://render.com/)
-- Set the start command to:
-  ```
-  python web_visualize.py
-  ```
-- Your app will be available at a public URL
-- Try it live: https://checkers-using-neat1.onrender.com/
+## 3. Value network (`ai/features.py`, `ai/value_net.py`)
 
----
+- Input (36): the 32 squares canonicalized to the side to move (board rotated
+  180 degrees for player 2, ownership swapped; +1 man / +1.3 king for the
+  mover, negative for the opponent) plus 4 normalized piece counts. A position
+  and its color-swapped mirror produce identical inputs by construction.
+- Output: one tanh unit in [-1, 1] = expected outcome for the side to move,
+  scaled by 600 inside search so it stays below mate scores.
+- NEAT config: `initial_connection = full_direct` (fully wired minimal nets;
+  the neat-python default `unconnected` would start with constant outputs),
+  single output, growth-biased structural mutation rates.
 
-## 6. Project Structure
-- `checkers/` - Game logic and visualization
-- `ai/` - AI agent, evaluation, and training code
-- `main.py` - CLI entry point
-- `web_visualize.py` - Flask web app
-- `neat_config.txt` - NEAT configuration
-- `requirements.txt` - Python dependencies
-- `render.yaml` - Render deployment config
-- `best_genome.pkl`, `best_policy_genome.pkl`, `best_value_genome.pkl` - Saved NEAT models
-- `training_metrics.csv`, `fitness_log.csv`, `performance_log.pkl` - Training logs and metrics
+## 4. Search (`ai/search.py`)
 
----
+Iterative-deepening negamax alpha-beta with:
 
-## 7. Training & Evaluation
-- Training is performed via `main.py train` using NEAT.
-- Evaluation scripts compare NEAT agents to Random agents.
-- Visualizations and logs are saved for analysis.
+- transposition table (Zobrist-keyed, bound flags, TT-move ordering),
+- trivial-but-correct quiescence: captures are forced in checkers, so at
+  depth <= 0 the search simply continues while the side to move has captures
+  and only evaluates quiet positions,
+- single-reply extensions,
+- repetition awareness (positions seen in the game history or search path
+  score 0), 40-move-rule awareness,
+- seeded random tie-breaking at the root so equal engines produce varied
+  games (needed for meaningful match statistics).
 
-### Example Training Plot
-![Training Plot](./train_img.jpg)
+Because multi-jumps are single moves, the side to move always alternates
+between plies and plain negamax sign handling is exact.
 
----
+## 5. Training (`ai/train_path_a.py`)
 
-## 8. Extending the Project
-- Add new agent types in `ai/`
-- Modify reward functions or evaluation strategies
-- Change NEAT parameters in `neat_config.txt`
-- Add new visualizations or web features
+Per generation:
 
----
+1. Every genome plays color-balanced games against randomly paired peers
+   (`--peer-rounds` rounds of random perfect matchings) and against a random
+   hall-of-fame member. All games run in parallel across processes with
+   per-game seeds.
+2. Fitness = mean points per game. Wins/losses are 1/0; draws are
+   `0.5 + 0.1*tanh(material/300)` - a bounded tie-break inside (0.4, 0.6)
+   that never reorders a win above a draw or a draw above a loss.
+3. The generation best must score >= 55% in a strict gate match against
+   sampled HOF members to enter the hall of fame (Elo-gating, prevents
+   coevolutionary forgetting/cycling).
+4. Every `--probe-every` generations the best genome plays the fixed ladder;
+   a performance Elo (random anchored at 0, ladder calibrated once and
+   cached) is logged to `runs/<name>/training_metrics.csv`.
 
-## 9. Troubleshooting
-- **502 Bad Gateway on Render:** Ensure `web_visualize.py` uses the correct port:
-  ```python
-  import os
-  port = int(os.environ.get("PORT", 5000))
-  app.run(host="0.0.0.0", port=port)
-  ```
-- **Missing .pkl files:** Train the agent first (`python main.py train`) or provide pre-trained models.
-- **Pygame errors:** Some features require a local display (not available on Render).
-- **Large files:** Do not commit files >100MB to GitHub. Use `.gitignore` for logs and checkpoints.
+Truncated games (150 plies) are adjudicated: a 3-man material edge wins,
+otherwise draw.
 
----
+Design rules honored throughout: no reward shaping; correct credit on both
+colors; the measurement ladder never contributes fitness; every stochastic
+component is seeded.
 
-## 10. Screenshots & Visuals
+## 6. Known limitations / next steps
 
-### Web App Screenshot
-![Web App Screenshot](./image.png)
+- Training-time search depth (default 4) bounds tactical quality of the
+  fitness signal; play deeper than you train (e.g., depth 6-8).
+- neat-python network evaluation is the hot loop; a vectorized/compiled
+  evaluator (or Rust/C engine port) would enable bigger populations and
+  deeper training search.
+- Path B (planned): fixed 128-logit policy head + PUCT MCTS with
+  visit-distribution distillation as dense fitness; endgame tablebases would
+  push toward never-losing play.
 
----
+## 7. Contact
 
-## 11. License & Credits
-- MIT License (see LICENSE file)
-- Inspired by AlphaGo and the power of neuroevolution!
-
----
-
-## 12. Contact
-For questions, suggestions, or contributions, please open an issue or pull request on GitHub.
-
----
-
-## 13. Frequently Asked Questions (FAQ)
-
-**Q1: What is NEAT and why use it for Checkers?**  
-A: NEAT (NeuroEvolution of Augmenting Topologies) is an evolutionary algorithm that evolves both the weights and structure of neural networks. It is well-suited for game AI because it can discover effective strategies and adapt its architecture over time, making it ideal for complex games like Checkers.
-
-**Q2: How do I train the AI from scratch?**  
-A: Run `python main.py train`. This will start the NEAT training loop, evolving agents through self-play and saving the best models as .pkl files.
-
-**Q3: Can I play against the AI in my browser?**  
-A: Yes! You can play online at [https://checkers-using-neat1.onrender.com/](https://checkers-using-neat1.onrender.com/) or run the web app locally with `python web_visualize.py`.
-
-**Q4: What if I get a 502 Bad Gateway error on Render?**  
-A: Make sure your `web_visualize.py` uses the correct port:
-```python
-import os
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
-```
-
-**Q5: Why do I see errors about missing .pkl files?**  
-A: The .pkl files are saved NEAT models. You need to train the agent first (`python main.py train`) or provide pre-trained models in the project directory.
-
-**Q6: How do I change the AI’s difficulty or behavior?**  
-A: You can adjust NEAT parameters in `neat_config.txt`, change the number of MCTS simulations in the web app, or modify agent code in the `ai/` folder.
-
-**Q7: Can I use this project for other board games?**  
-A: The code is modular and can be adapted for other turn-based board games with some changes to the game logic and agent interfaces.
-
-**Q8: How do I contribute or report issues?**  
-A: Open an issue or pull request on GitHub. Contributions, bug reports, and suggestions are welcome!
-
-**Q9: What license is this project under?**  
-A: MIT License. You are free to use, modify, and distribute the code with attribution.
-
-**Q10: Where can I find more information or contact the author?**  
-A: Email: binidani1903@gmail.com 
-   Telegram: @benasphy
+Email: binidani1903@gmail.com | Telegram: @benasphy
+License: MIT.

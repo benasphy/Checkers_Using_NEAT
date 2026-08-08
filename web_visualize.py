@@ -1,25 +1,33 @@
-from flask import Flask, render_template_string, request, jsonify
-import numpy as np
-from checkers.game import CheckersGame
-from ai.agent import NEATAgent, ValueNEATAgent
-from ai.random_agent import RandomAgent
-from ai.mcts import MCTSAgent
-import neat
+"""Flask web app: play against the evolved NEAT value network + alpha-beta agent.
+
+The agent is the trained value genome (``best_value_genome.pkl``) evaluated
+inside iterative-deepening alpha-beta search; the Strength control sets the
+search depth. Falls back to a material-only searcher when no genome exists.
+"""
+
 import os
 import pickle
 
+from flask import Flask, render_template_string, request
+
+from checkers.game import CheckersGame
+from ai.ladder import make_agent, neat_spec
+
 app = Flask(__name__)
 
-# HTML template for board rendering
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "neat_value_config.txt")
+GENOME_PATH = os.path.join(os.path.dirname(__file__), "best_value_genome.pkl")
+MOVE_TIME_LIMIT = 5.0  # seconds per AI move in the web UI
+
 HTML_TEMPLATE = '''
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Checkers Web Visualization</title>
+  <title>Checkers vs NEAT + Search</title>
   <style>
-    body { font-family: sans-serif; }
-    .board { display: grid; grid-template: repeat(8, 40px) / repeat(8, 40px); margin: 20px auto; }
+    body { font-family: sans-serif; text-align: center; }
+    .board { display: grid; grid-template: repeat(8, 40px) / repeat(8, 40px); margin: 20px auto; width: 320px; }
     .cell { width: 40px; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; cursor: pointer; }
     .light { background: #e8ebef; }
     .dark { background: #7d8796; }
@@ -32,77 +40,51 @@ HTML_TEMPLATE = '''
   <script>
     let selected = null;
     function selectCell(row, col) {
-      // Deselect previous
-      if (selected) {
-        document.getElementById(selected).classList.remove('selected');
-      }
+      if (selected) document.getElementById(selected).classList.remove('selected');
       selected = row + '-' + col;
       document.getElementById(selected).classList.add('selected');
       document.getElementById('from_row').value = row;
       document.getElementById('from_col').value = col;
-      // Enable only empty, dark cells as destination
-      Array.from(document.getElementsByClassName('cell')).forEach(cell => {
-        cell.classList.remove('can-select-dest');
-      });
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          let cell = document.getElementById(`${r}-${c}`);
-          if (cell && cell.dataset.empty === "1" && (r+c)%2 === 1) {
-            cell.classList.add('can-select-dest');
-            cell.onclick = function() { setToCell(r, c); };
-          }
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+        let cell = document.getElementById(`${r}-${c}`);
+        if (cell && cell.dataset.empty === "1" && (r + c) % 2 === 1) {
+          cell.onclick = function () { setToCell(r, c); };
         }
       }
     }
     function setToCell(row, col) {
-      if (!selected) return; // Must select a piece first
+      if (!selected) return;
       document.getElementById('to_row').value = row;
       document.getElementById('to_col').value = col;
-      // Reset selection before submitting
-      document.getElementById(selected).classList.remove('selected');
-      selected = null;
-      Array.from(document.getElementsByClassName('cell')).forEach(cell => {
-        cell.classList.remove('can-select-dest');
-        cell.onclick = null;
-      });
       document.getElementById('moveForm').submit();
     }
-    // On page load, clear all hidden fields
-    window.onload = function() {
-      document.getElementById('from_row').value = '';
-      document.getElementById('from_col').value = '';
-      document.getElementById('to_row').value = '';
-      document.getElementById('to_col').value = '';
+    window.onload = function () {
+      ['from_row', 'from_col', 'to_row', 'to_col'].forEach(
+        id => document.getElementById(id).value = '');
     }
   </script>
 </head>
 <body>
-  <h2>Checkers: Human vs NEAT</h2>
-
-  <form method="post" style="margin-bottom: 10px;">
-    <label>Agent Mode: </label>
-    <select name="agent_mode" onchange="this.form.submit()">
-      <option value="neat" {% if agent_mode == 'neat' %}selected{% endif %}>NEAT Only</option>
-      <option value="mcts" {% if agent_mode == 'mcts' %}selected{% endif %}>MCTS + NEAT</option>
-    </select>
-    <label style="margin-left: 10px;">MCTS Simulations:</label>
-    <select name="mcts_simulations" onchange="this.form.submit()">
-      {% for n in [50, 100, 200, 400, 800, 1600] %}
-        <option value="{{n}}" {% if mcts_simulations == n %}selected{% endif %}>{{n}}</option>
+  <h2>Checkers: Human vs NEAT + Alpha-Beta</h2>
+  <form method="post">
+    <label>Strength (search depth): </label>
+    <select name="depth" onchange="this.form.submit()">
+      {% for d in [2, 4, 6, 8] %}
+        <option value="{{d}}" {% if depth == d %}selected{% endif %}>depth {{d}}</option>
       {% endfor %}
     </select>
-    <span style="margin-left: 10px; color: #888;">Current: {{ agent_mode|capitalize }}{% if agent_mode == 'mcts' %} ({{ mcts_simulations }} sims){% endif %}</span>
+    <span style="margin-left: 10px; color: #888;">Agent: {{ agent_name }}</span>
   </form>
 
   <div class="board">
     {% for row in range(8) %}
       {% for col in range(8) %}
         {% set cell_id = row|string + '-' + col|string %}
-        <div class="cell {{ 'light' if (row+col)%2==0 else 'dark' }}" id="{{cell_id}}" data-empty="{{ 1 if board[row][col] == 0 else 0 }}"
-          {% if human_turn and board[row][col] in [1,3] and from_row is none %}
+        <div class="cell {{ 'light' if (row+col)%2==0 else 'dark' }}" id="{{cell_id}}"
+             data-empty="{{ 1 if board[row][col] == 0 else 0 }}"
+          {% if human_turn and board[row][col] in [1,3] %}
             onclick="selectCell({{row}},{{col}})"
-          {% endif %}
-        >
+          {% endif %}>
           {% if board[row][col] == 1 %}<div class="r"></div>{% endif %}
           {% if board[row][col] == 2 %}<div class="b"></div>{% endif %}
           {% if board[row][col] == 3 %}<div class="R"></div>{% endif %}
@@ -113,164 +95,99 @@ HTML_TEMPLATE = '''
   </div>
   <p>{{ status }}</p>
   <form id="moveForm" method="post">
-    <input type="hidden" name="from_row" id="from_row" value="{{ from_row if from_row is not none else '' }}">
-    <input type="hidden" name="from_col" id="from_col" value="{{ from_col if from_col is not none else '' }}">
+    <input type="hidden" name="from_row" id="from_row" value="">
+    <input type="hidden" name="from_col" id="from_col" value="">
     <input type="hidden" name="to_row" id="to_row" value="">
     <input type="hidden" name="to_col" id="to_col" value="">
     {% if human_turn %}
-      <div style="margin: 10px 0; color: #888;">Select your piece, then select a destination square. No need to press submit.</div>
+      <div style="margin: 10px 0; color: #888;">
+        Click a piece, then its destination. For a multi-jump, click the FINAL landing square.
+        Captures are mandatory.
+      </div>
     {% endif %}
     <button name="reset" value="1">Reset Game</button>
   </form>
-  <div style="margin-top: 18px; color: #aaa; font-size: 13px; text-align: center;">
-    Frontend by Ben Asphy
-  </div>
 </body>
 </html>
 '''
 
 game = None
-agent1 = None
-agent2 = None
-config = None
-agent_mode = 'neat'  # 'neat' or 'mcts'
-mcts_simulations = 200
+agent = None
+agent_name = "?"
+depth = 4
 
-def setup_agents():
-    global agent1, agent2, config, agent_mode, mcts_simulations
-    config_path = os.path.join(os.path.dirname(__file__), 'neat_config.txt')
-    config = neat.Config(
-        neat.DefaultGenome,
-        neat.DefaultReproduction,
-        neat.DefaultSpeciesSet,
-        neat.DefaultStagnation,
-        config_path
-    )
-    # Load policy and value NEAT agents
-    neat_agent = None
-    value_agent = None
-    try:
-        with open('best_policy_genome.pkl', 'rb') as f:
-            policy_genome = pickle.load(f)
-        neat_agent = NEATAgent(policy_genome, config, player=2)
-    except FileNotFoundError:
+
+def setup_agent():
+    global agent, agent_name
+    if os.path.exists(GENOME_PATH):
         try:
-            with open('best_genome.pkl', 'rb') as f:
-                policy_genome = pickle.load(f)
-            neat_agent = NEATAgent(policy_genome, config, player=2)
-        except FileNotFoundError:
-            print("Warning: Could not load policy NEAT agent. Using RandomAgent instead.")
-            neat_agent = RandomAgent(player=2)
-    try:
-        with open('best_value_genome.pkl', 'rb') as f:
-            value_genome = pickle.load(f)
-        value_agent = ValueNEATAgent(value_genome, config, player=2)
-    except FileNotFoundError:
-        value_agent = None
-    agent1 = RandomAgent(player=1)
-    if agent_mode == 'mcts':
-        if value_agent is not None:
-            agent2 = MCTSAgent(neat_agent, value_agent=value_agent, num_simulations=mcts_simulations, c_param=1.4)
-        else:
-            agent2 = MCTSAgent(neat_agent, num_simulations=mcts_simulations, c_param=1.4)
-    else:
-        agent2 = neat_agent
+            with open(GENOME_PATH, "rb") as f:
+                genome = pickle.load(f)
+            agent = make_agent(neat_spec(genome, CONFIG_PATH, depth))
+            agent_name = f"NEAT value net + alpha-beta (d{depth})"
+            return
+        except Exception as e:  # incompatible/corrupt pickle
+            print(f"Could not load genome ({e}); using material searcher.")
+    agent = make_agent(("material", depth))
+    agent_name = f"material-only alpha-beta (d{depth})"
 
-@app.route('/', methods=['GET', 'POST'])
+
+@app.route("/", methods=["GET", "POST"])
 def index():
-    global game, agent1, agent2, agent_mode, mcts_simulations
-    # Get agent mode and simulation count from query or form
-    if request.method == 'POST':
-        agent_mode = request.form.get('agent_mode', agent_mode)
-        try:
-            mcts_simulations = int(request.form.get('mcts_simulations', mcts_simulations))
-        except (TypeError, ValueError):
-            mcts_simulations = 100
-    else:
-        agent_mode = request.args.get('agent_mode', agent_mode)
-        try:
-            mcts_simulations = int(request.args.get('mcts_simulations', mcts_simulations))
-        except (TypeError, ValueError):
-            mcts_simulations = 100
-
-    if game is None or request.form.get('reset'):
-        game = CheckersGame()
-        setup_agents()
+    global game, depth
     status = ""
-    human_turn = (game.current_player == 1)
-    from_row = request.form.get('from_row')
-    from_col = request.form.get('from_col')
-    to_row = request.form.get('to_row')
-    to_col = request.form.get('to_col')
-    move_made = False
 
-    if request.method == 'POST' and request.form.get('reset'):
+    if request.method == "POST" and request.form.get("depth"):
+        try:
+            new_depth = int(request.form["depth"])
+            if new_depth != depth:
+                depth = new_depth
+                setup_agent()
+        except ValueError:
+            pass
+
+    if game is None or (request.method == "POST" and request.form.get("reset")):
         game = CheckersGame()
-        setup_agents()
-        status = "Game reset. Human's turn."
-        human_turn = True
-        from_row = from_col = to_row = to_col = None
-    elif request.method == 'POST' and human_turn:
-        # Human move
-        print(f"DEBUG: Human submitted move: from=({from_row},{from_col}) to=({to_row},{to_col})")
-        if all(x not in (None, "") for x in [from_row, from_col, to_row, to_col]):
-            try:
-                move = (int(from_row), int(from_col), int(to_row), int(to_col))
-                legal_moves = game.get_legal_moves()
-                print(f"DEBUG: Legal moves: {legal_moves}")
-                # Find the full move tuple to pass to game.make_move
-                full_move = next((lm for lm in legal_moves if move == lm[:4]), None)
-                if full_move:
-                    game.make_move(full_move)
-                    move_made = True
-                    from_row = from_col = to_row = to_col = None
-                else:
-                    status = "Invalid move. Try again."
-                    print(f"DEBUG: Invalid move attempted: {move}")
-                    from_row = from_col = to_row = to_col = None
-            except Exception as e:
-                status = f"Error: {e}"
-                print(f"DEBUG: Error processing move: {e}")
-                to_row = to_col = None
-    # Agent2 move if it's agent2's turn and game not over
-    while not game.is_game_over() and game.current_player == 2:
-        legal_moves = game.get_legal_moves()
-        if not legal_moves:
-            break
-        # For MCTS agent, pass the game object; for NEAT, pass board/legals
-        if agent_mode == 'mcts' and isinstance(agent2, MCTSAgent):
-            move = agent2.select_move(game)
-        else:
-            move = agent2.select_move(game.board.board, legal_moves)
-        if move:
-            game.make_move(move)
-        else:
-            break
+        setup_agent()
+        status = "New game. Your move."
 
-    # Update status
+    if request.method == "POST" and not request.form.get("reset") \
+            and game.current_player == 1 and not game.is_game_over():
+        vals = [request.form.get(k) for k in
+                ("from_row", "from_col", "to_row", "to_col")]
+        if all(v not in (None, "") for v in vals):
+            fr_r, fr_c, to_r, to_c = map(int, vals)
+            mv = game.find_engine_move((fr_r, fr_c), (to_r, to_c))
+            if mv is not None:
+                game.make_engine_move(mv)
+            else:
+                status = "Illegal move (captures are mandatory). Try again."
+
+    # AI reply
+    while not game.is_game_over() and game.current_player == 2:
+        mv = agent.select(game, max_seconds=MOVE_TIME_LIMIT) \
+            if hasattr(agent, "searcher") else agent.select(game)
+        if mv is None:
+            break
+        game.make_engine_move(mv)
+
     if game.is_game_over():
         winner = game.get_winner()
-        if winner == 1:
-            status = "Human wins!"
-        elif winner == 2:
-            status = f"{'MCTS+NEAT' if agent_mode == 'mcts' else 'NEAT'} Agent wins!"
-        else:
-            status = "Draw!"
-    else:
-        status = f"{'Human' if game.current_player == 1 else ('MCTS+NEAT' if agent_mode == 'mcts' else 'NEAT Agent')}'s turn"
-    board = game.board.board.tolist()
+        status = {1: "You win!", 2: "AI wins!",
+                  0: f"Draw ({game.draw_reason()})."}[winner]
+    elif not status:
+        status = "Your move." if game.current_player == 1 else "AI thinking..."
+
     return render_template_string(
         HTML_TEMPLATE,
-        board=board,
+        board=game.position.to_array().tolist(),
         status=status,
         human_turn=(game.current_player == 1 and not game.is_game_over()),
-        from_row=from_row,
-        from_col=from_col,
-        agent_mode=agent_mode,
-        mcts_simulations=mcts_simulations
+        depth=depth,
+        agent_name=agent_name,
     )
 
-if __name__ == '__main__':
-    import os
+
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

@@ -1,4 +1,5 @@
 neat-python
-pygame
 numpy
 Flask
+matplotlib
+pytest
