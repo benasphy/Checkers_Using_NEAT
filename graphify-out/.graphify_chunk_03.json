@@ -1,0 +1,272 @@
+{
+  "nodes": [
+    {
+      "id": "image_checkers_web_visualization",
+      "label": "Checkers Web Visualization",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_human_vs_neat_match",
+      "label": "Human vs NEAT Checkers Match",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_checkers_board",
+      "label": "8x8 Checkers Board",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_black_piece_set",
+      "label": "Black Checkers Piece Set",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_red_piece_set",
+      "label": "Red Checkers Piece Set",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_initial_checkers_layout",
+      "label": "Initial Checkers Layout",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_neat_only_agent_mode",
+      "label": "NEAT-Only Agent Mode",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_current_neat_agent",
+      "label": "Current NEAT Agent",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_mcts_simulations_200",
+      "label": "MCTS Simulations Set to 200",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_human_turn_state",
+      "label": "Human Turn State",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_piece_destination_interaction",
+      "label": "Piece Then Destination Selection",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_reset_game_control",
+      "label": "Reset Game Control",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "image_render_hosted_application",
+      "label": "Render-Hosted Checkers Application",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "image_checkers_web_visualization",
+      "target": "image_human_vs_neat_match",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_checkers_web_visualization",
+      "target": "image_render_hosted_application",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_human_vs_neat_match",
+      "target": "image_checkers_board",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_checkers_board",
+      "target": "image_black_piece_set",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_checkers_board",
+      "target": "image_red_piece_set",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_checkers_board",
+      "target": "image_initial_checkers_layout",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_human_vs_neat_match",
+      "target": "image_neat_only_agent_mode",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_neat_only_agent_mode",
+      "target": "image_current_neat_agent",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_human_vs_neat_match",
+      "target": "image_mcts_simulations_200",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_human_vs_neat_match",
+      "target": "image_human_turn_state",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_human_turn_state",
+      "target": "image_piece_destination_interaction",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "image_human_vs_neat_match",
+      "target": "image_reset_game_control",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/image.png",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

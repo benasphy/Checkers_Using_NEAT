@@ -24,7 +24,10 @@ from ai.value_net import ValueNetwork
 _CONFIG_CACHE: dict[str, neat.Config] = {}
 
 
-def load_neat_config(path: str) -> neat.Config:
+def load_neat_config(path: str, fresh: bool = False) -> neat.Config:
+    if fresh:
+        return neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                           neat.DefaultSpeciesSet, neat.DefaultStagnation, path)
     cfg = _CONFIG_CACHE.get(path)
     if cfg is None:
         cfg = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,

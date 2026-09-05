@@ -1,0 +1,145 @@
+{
+  "nodes": [
+    {
+      "id": "train_img_training_progress",
+      "label": "Training Progress Chart",
+      "file_type": "image",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "train_img_policy_fitness",
+      "label": "Policy Fitness",
+      "file_type": "concept",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "train_img_value_fitness",
+      "label": "Value Fitness",
+      "file_type": "concept",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "train_img_generational_training",
+      "label": "Generational Training",
+      "file_type": "concept",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "train_img_policy_fitness_plateau",
+      "label": "Policy Fitness Plateau Near 1,140",
+      "file_type": "concept",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "train_img_value_fitness_fluctuation",
+      "label": "Value Fitness Fluctuation Around 800",
+      "file_type": "concept",
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "train_img_training_progress",
+      "target": "train_img_policy_fitness",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "train_img_training_progress",
+      "target": "train_img_value_fitness",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "train_img_training_progress",
+      "target": "train_img_generational_training",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "train_img_policy_fitness",
+      "target": "train_img_policy_fitness_plateau",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "train_img_value_fitness",
+      "target": "train_img_value_fitness_fluctuation",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "train_img_policy_fitness",
+      "target": "train_img_value_fitness",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "train_img_policy_fitness_plateau",
+      "target": "train_img_value_fitness_fluctuation",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "/Users/teru/Checkers_Using_NEAT/train_img.jpg",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

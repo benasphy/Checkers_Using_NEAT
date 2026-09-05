@@ -1,0 +1,4 @@
+condition,seed,eval_depth,games_per_rung,elo
+neat,0,4,4,-352
+fixed,0,4,4,-352
+fixed_nonlinear,0,4,4,-210

@@ -8,9 +8,8 @@ Designed around the properties of the game:
   search simply keeps going while the side to move has captures (capture
   chains strictly remove pieces, so this always terminates) and evaluates
   only quiet positions.
-- Draw awareness: positions repeated once anywhere in the game history or
-  the current search path are scored 0 (the game wrapper enforces the real
-  threefold rule), as is reaching the 40-move-rule counter.
+- Draw awareness: threefold repetition and the 40-move-rule counter are
+  evaluated with the same thresholds as the game wrapper.
 
 Features: transposition table, TT-move + capture-size move ordering,
 single-reply extensions, seeded random tie-breaking at the root (so equal
@@ -44,9 +43,10 @@ class Searcher:
         self.eval_fn = eval_fn
         self.depth = depth
         self.rng = random.Random(seed)
-        self.tt: dict[int, tuple] = {}
+        self.tt: dict[tuple, tuple] = {}
         self.tt_max = tt_max
         self.nodes = 0
+        self.evaluations = 0
         self._rep: dict[int, int] = {}
         self._deadline = None
 
@@ -60,6 +60,8 @@ class Searcher:
             pos = game_or_pos
             history = list(hash_history) if hash_history else [pos.hash]
 
+        # Root histories are independent; never reuse values across games.
+        self.tt.clear()
         moves = pos.legal_moves()
         if not moves:
             return None
@@ -74,9 +76,6 @@ class Searcher:
             self._rep[h] = self._rep.get(h, 0) + 1
 
         self._deadline = (time.monotonic() + max_seconds) if max_seconds else None
-        if len(self.tt) > self.tt_max:
-            self.tt.clear()
-
         order = moves[:]
         self.rng.shuffle(order)
         best = order[0]
@@ -124,10 +123,12 @@ class Searcher:
         # Draw rules (never applied at the root, ply >= 1 here by construction).
         if pos.hmc >= MAX_HMC_PLIES:
             return 0.0
-        if self._rep.get(pos.hash, 0) >= 1:
+        if self._rep.get(pos.hash, 0) >= 2:
             return 0.0  # repetition scored as draw
 
-        entry = self.tt.get(pos.hash)
+        rep_context = frozenset((h, n) for h, n in self._rep.items() if n)
+        tt_key = (pos.hash, pos.hmc, rep_context)
+        entry = self.tt.get(tt_key)
         tt_move = None
         if entry is not None:
             e_depth, e_flag, e_val, tt_move = entry
@@ -148,6 +149,7 @@ class Searcher:
 
         is_jump = moves[0].cap != 0
         if (depth <= 0 and not is_jump) or ply >= 100:
+            self.evaluations += 1
             return self.eval_fn(pos)
 
         # Move ordering: TT move first, then bigger captures first.
@@ -186,8 +188,8 @@ class Searcher:
                 flag = _UPPER
             elif best_val >= beta:
                 flag = _LOWER
-            self.tt[pos.hash] = (depth, flag, best_val,
-                                 (best_mv.fr, best_mv.to, best_mv.cap))
+            self.tt[tt_key] = (depth, flag, best_val,
+                               (best_mv.fr, best_mv.to, best_mv.cap))
         return best_val
 
 

@@ -38,17 +38,17 @@ class _BoardView:
 
 
 class CheckersGame:
-    def __init__(self):
+    def __init__(self, initial_pos: Position | None = None, initial_moves=None):
         self.board = _BoardView(self)
-        self.reset()
+        self.reset(initial_pos=initial_pos, initial_moves=initial_moves)
 
     # -- state ----------------------------------------------------------------
 
-    def reset(self):
-        self.position = Position.initial()
+    def reset(self, initial_pos: Position | None = None, initial_moves=None):
+        self.position = initial_pos if initial_pos is not None else Position.initial()
         self.hash_history = [self.position.hash]
         self._hash_counts = {self.position.hash: 1}
-        self.move_history: list[Move] = []
+        self.move_history = list(initial_moves) if initial_moves is not None else []
 
     @property
     def current_player(self) -> int:

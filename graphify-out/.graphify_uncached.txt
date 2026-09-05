@@ -1,0 +1,15 @@
+/Users/teru/Checkers_Using_NEAT/INSTRUCTIONS.md
+/Users/teru/Checkers_Using_NEAT/Kimi5.md
+/Users/teru/Checkers_Using_NEAT/PROJECT_DOCUMENTATION.md
+/Users/teru/Checkers_Using_NEAT/README.md
+/Users/teru/Checkers_Using_NEAT/experiments/README.md
+/Users/teru/Checkers_Using_NEAT/kimi6.md
+/Users/teru/Checkers_Using_NEAT/kimi_correcting.md
+/Users/teru/Checkers_Using_NEAT/neat_config.txt
+/Users/teru/Checkers_Using_NEAT/neat_fixed_config.txt
+/Users/teru/Checkers_Using_NEAT/power outagee.md
+/Users/teru/Checkers_Using_NEAT/render.yaml
+/Users/teru/Checkers_Using_NEAT/requirements.txt
+/Users/teru/Checkers_Using_NEAT/fitness_plot.png
+/Users/teru/Checkers_Using_NEAT/image.png
+/Users/teru/Checkers_Using_NEAT/train_img.jpg

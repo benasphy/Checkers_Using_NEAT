@@ -1,8 +1,14 @@
-# NEAT configuration for the evolved VALUE network (Path A).
-# Input: 36 canonical features (see ai/features.py).
-# Output: 1 tanh value in [-1, 1] = expected outcome for the side to move.
-# Networks start minimal but FULLY CONNECTED (input -> output), per standard
-# NEAT practice; topology grows from there.
+# NEAT configuration for the RQ1 (TOPO) FIXED-TOPOLOGY baseline.
+# Blondie24-style control condition: identical to neat_value_config.txt
+# EXCEPT all structural mutation rates are zero - the topology is frozen at
+# the initial fully-connected 36 -> 1 feed-forward network and only weights
+# and biases evolve. Comparing this against neat_value_config.txt at equal
+# compute answers RQ1: "does evolving topology (NEAT) beat fixed-topology
+# evolution?"
+#
+# IMPORTANT: if you change any non-structural knob in neat_value_config.txt,
+# mirror the change here. The two configs must differ ONLY in the four
+# structural rates below (all zero) and enabled_mutate_rate.
 
 [NEAT]
 pop_size              = 96
@@ -50,9 +56,9 @@ response_mutate_power   = 0.0
 response_mutate_rate    = 0.0
 response_replace_rate   = 0.0
 
-# connection enable options
+# connection enable options (0.0: frozen topology cannot toggle connections)
 enabled_default         = True
-enabled_mutate_rate     = 0.02
+enabled_mutate_rate     = 0.0
 enabled_rate_to_true_add = 0.0
 enabled_rate_to_false_add = 0.0
 
@@ -60,9 +66,9 @@ enabled_rate_to_false_add = 0.0
 compatibility_disjoint_coefficient = 1.0
 compatibility_weight_coefficient   = 0.6
 
-# connection add/remove rates (bias toward growth)
-conn_add_prob           = 0.35
-conn_delete_prob        = 0.10
+# STRUCTURAL MUTATIONS: ALL ZERO (this is the RQ1 manipulation)
+conn_add_prob           = 0.0
+conn_delete_prob        = 0.0
 
 # connection weight options
 weight_init_type        = gaussian
@@ -74,9 +80,9 @@ weight_mutate_power     = 0.4
 weight_mutate_rate      = 0.8
 weight_replace_rate     = 0.05
 
-# node add/remove rates
-node_add_prob           = 0.15
-node_delete_prob        = 0.05
+# STRUCTURAL MUTATIONS: ALL ZERO
+node_add_prob           = 0.0
+node_delete_prob        = 0.0
 
 [DefaultSpeciesSet]
 compatibility_threshold = 3.0
